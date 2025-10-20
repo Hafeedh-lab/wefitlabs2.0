@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from '@/lib/supabase-client';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 import LiveBracketView from '@/components/features/LiveBracketView';
 import SponsorRibbon from '@/components/features/SponsorRibbon';
 import JoinCta from '@/components/features/JoinCta';
@@ -15,7 +15,7 @@ export default async function EventPage({ params }: EventPageProps) {
     .from('events')
     .select('*')
     .eq('id', params.eventId)
-    .single();
+    .maybeSingle() as any;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-wefit-dark to-wefit-dark-muted pb-24">

@@ -1,6 +1,6 @@
 import { ImageResponse } from '@vercel/og';
 import { NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/lib/supabase-client';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export const runtime = 'edge';
 
@@ -10,7 +10,7 @@ export async function GET(_: Request, { params }: { params: { matchId: string } 
     .from('matches')
     .select(`*, team1:participants(team_name), team2:participants(team_name), event:events(name, sponsor_logo_url) `)
     .eq('id', params.matchId)
-    .single();
+    .maybeSingle() as any;
 
   if (error || !match) {
     return NextResponse.json({ error: 'Match not found' }, { status: 404 });

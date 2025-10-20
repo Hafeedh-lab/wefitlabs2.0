@@ -8,7 +8,7 @@ import confetti from 'canvas-confetti';
 import { Check, Loader2 } from 'lucide-react';
 import { checkInSchema, type CheckInFormValues } from '@/lib/validation';
 import { sanitizeInput } from '@/utils/sanitize';
-import { supabaseClient } from '@/lib/supabase-client';
+import { getSupabaseClient } from '@/lib/supabase-client';
 import { useToast } from '@/components/ui/ToastProvider';
 import { trackEvent, getSessionId } from '@/lib/analytics';
 
@@ -27,8 +27,7 @@ export default function CheckInPage({ params }: CheckInPageProps) {
     handleSubmit,
     formState: { errors, isSubmitting, isSubmitSuccessful }
   } = useForm<CheckInFormValues>({
-    resolver: zodResolver(checkInSchema),
-    defaultValues: { consentMarketing: false }
+    resolver: zodResolver(checkInSchema)
   });
 
   useEffect(() => {
@@ -43,9 +42,8 @@ export default function CheckInPage({ params }: CheckInPageProps) {
     if (!('credentials' in navigator)) return;
     navigator.credentials
       .get({
-        federated: { providers: ['https://accounts.google.com'] },
         mediation: 'silent'
-      })
+      } as CredentialRequestOptions)
       .catch(() => undefined);
   }, []);
 
@@ -70,14 +68,15 @@ export default function CheckInPage({ params }: CheckInPageProps) {
       session_id: getSessionId()
     };
 
-    const { error } = await supabaseClient.from('participants').insert({
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.from('participants').insert({
       event_id: sanitized.event_id,
       first_name: sanitized.first_name ?? '',
       team_name: sanitized.team_name ?? '',
       email: sanitized.email,
       phone: sanitized.phone,
-      consent_marketing: sanitized.consent_marketing
-    });
+      consent_marketing: sanitized.consent_marketing ?? false
+    } as any);
 
     if (error) {
       console.error(error);
@@ -102,7 +101,7 @@ export default function CheckInPage({ params }: CheckInPageProps) {
       <div className="w-full max-w-md rounded-2xl border border-white/5 bg-wefit-dark-muted p-6 shadow-wefit">
         <div className="mb-6 space-y-2 text-center">
           <p className="text-sm uppercase tracking-[0.2em] text-wefit-grey">WeFit Labs Check-In</p>
-          <h1 className="heading-md">You\'re almost on court</h1>
+          <h1 className="heading-md">You&apos;re almost on court</h1>
           <p className="body-sm">Fill this out once per team so we can keep the bracket buzzing.</p>
         </div>
         <form className="space-y-4" onSubmit={onSubmit}>
@@ -166,7 +165,7 @@ export default function CheckInPage({ params }: CheckInPageProps) {
             ) : isSubmitSuccessful ? (
               <>
                 <Check className="h-5 w-5" />
-                You\'re in!
+                You&apos;re in!
               </>
             ) : (
               'Check in'

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { supabaseClient } from '@/lib/supabase-client';
+import { getSupabaseClient } from '@/lib/supabase-client';
 import type { Json } from '@/types/database';
 
 export type AnalyticsEventType =
@@ -34,13 +34,14 @@ interface TrackEventParams {
 
 export async function trackEvent({ event_type, event_id, metadata }: TrackEventParams) {
   try {
-    await supabaseClient.from('analytics_events').insert({
+    const supabase = getSupabaseClient();
+    await supabase.from('analytics_events').insert({
       event_type,
       event_id,
       session_id: typeof window === 'undefined' ? null : getSessionId(),
       user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
       metadata: metadata ?? null
-    });
+    } as any);
   } catch (error) {
     console.error('Analytics tracking failed', error);
   }

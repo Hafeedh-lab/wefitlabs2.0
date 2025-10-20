@@ -44,7 +44,7 @@ export default function LiveBracketView({ eventId }: { eventId: string }) {
           table: 'matches',
           filter: `event_id=eq.${eventId}`
         },
-        async (payload) => {
+        async (payload: any) => {
           await mutate();
           if (payload.new?.id) {
             setAnimatingMatch(payload.new.id as string);

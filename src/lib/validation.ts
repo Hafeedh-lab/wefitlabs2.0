@@ -21,7 +21,7 @@ export const checkInSchema = z.object({
     .regex(/^[\d\s\-\+\(\)]+$/, 'Invalid phone number')
     .optional()
     .or(z.literal('').transform(() => undefined)),
-  consentMarketing: z.boolean().default(false)
+  consentMarketing: z.boolean().optional()
 });
 
 export type CheckInFormValues = z.infer<typeof checkInSchema>;

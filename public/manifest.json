@@ -1,0 +1,10 @@
+{
+  "name": "WeFit Labs Live",
+  "short_name": "WeFit Live",
+  "theme_color": "#111214",
+  "background_color": "#111214",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": []
+}

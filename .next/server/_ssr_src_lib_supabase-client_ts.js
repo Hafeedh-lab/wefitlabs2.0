@@ -1,0 +1,25 @@
+"use strict";
+/*
+ * ATTENTION: An "eval-source-map" devtool has been used.
+ * This devtool is neither made for production nor for readable output files.
+ * It uses "eval()" calls to create a separate source file with attached SourceMaps in the browser devtools.
+ * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
+ * or disable the default devtool with "devtool: false".
+ * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
+ */
+exports.id = "_ssr_src_lib_supabase-client_ts";
+exports.ids = ["_ssr_src_lib_supabase-client_ts"];
+exports.modules = {
+
+/***/ "(ssr)/./src/lib/supabase-client.ts":
+/*!************************************!*\
+  !*** ./src/lib/supabase-client.ts ***!
+  \************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   getSupabaseClient: () => (/* binding */ getSupabaseClient),\n/* harmony export */   supabaseClient: () => (/* binding */ supabaseClient)\n/* harmony export */ });\n/* harmony import */ var _supabase_supabase_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @supabase/supabase-js */ \"(ssr)/./node_modules/@supabase/supabase-js/dist/module/index.js\");\n\nconst supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? \"\";\nconst supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? \"\";\nif (!supabaseUrl || !supabaseAnonKey) {\n    console.warn(\"Supabase environment variables are not configured.\");\n}\nlet browserClient = null;\nconst getSupabaseClient = ()=>{\n    if (browserClient) return browserClient;\n    if (true) {\n        throw new Error(\"Supabase browser client cannot be used on the server\");\n    }\n    browserClient = (0,_supabase_supabase_js__WEBPACK_IMPORTED_MODULE_0__.createClient)(supabaseUrl, supabaseAnonKey);\n    return browserClient;\n};\nconst supabaseClient = new Proxy({}, {\n    get (_target, prop) {\n        const client = getSupabaseClient();\n        // @ts-expect-error dynamic proxy\n        return client[prop];\n    }\n});\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHNzcikvLi9zcmMvbGliL3N1cGFiYXNlLWNsaWVudC50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7QUFBMEU7QUFHMUUsTUFBTUMsY0FBY0MsUUFBUUMsR0FBRyxDQUFDQyx3QkFBd0IsSUFBSTtBQUM1RCxNQUFNQyxrQkFBa0JILFFBQVFDLEdBQUcsQ0FBQ0csNkJBQTZCLElBQUk7QUFFckUsSUFBSSxDQUFDTCxlQUFlLENBQUNJLGlCQUFpQjtJQUNwQ0UsUUFBUUMsSUFBSSxDQUFDO0FBQ2Y7QUFFQSxJQUFJQyxnQkFBaUQ7QUFFOUMsTUFBTUMsb0JBQW9CO0lBQy9CLElBQUlELGVBQWUsT0FBT0E7SUFDMUIsSUFBSSxJQUFrQixFQUFhO1FBQ2pDLE1BQU0sSUFBSUUsTUFBTTtJQUNsQjtJQUNBRixnQkFBZ0JULG1FQUFZQSxDQUFXQyxhQUFhSTtJQUNwRCxPQUFPSTtBQUNULEVBQUU7QUFFSyxNQUFNRyxpQkFBaUIsSUFBSUMsTUFBTSxDQUFDLEdBQStCO0lBQ3RFQyxLQUFJQyxPQUFPLEVBQUVDLElBQUk7UUFDZixNQUFNQyxTQUFTUDtRQUNmLGlDQUFpQztRQUNqQyxPQUFPTyxNQUFNLENBQUNELEtBQUs7SUFDckI7QUFDRixHQUFHIiwic291cmNlcyI6WyJ3ZWJwYWNrOi8vd2VmaXRsYWJzMi4wLy4vc3JjL2xpYi9zdXBhYmFzZS1jbGllbnQudHM/MTgwMCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBjcmVhdGVDbGllbnQsIHR5cGUgU3VwYWJhc2VDbGllbnQgfSBmcm9tICdAc3VwYWJhc2Uvc3VwYWJhc2UtanMnO1xuaW1wb3J0IHsgRGF0YWJhc2UgfSBmcm9tICdAL3R5cGVzL2RhdGFiYXNlJztcblxuY29uc3Qgc3VwYWJhc2VVcmwgPSBwcm9jZXNzLmVudi5ORVhUX1BVQkxJQ19TVVBBQkFTRV9VUkwgPz8gJyc7XG5jb25zdCBzdXBhYmFzZUFub25LZXkgPSBwcm9jZXNzLmVudi5ORVhUX1BVQkxJQ19TVVBBQkFTRV9BTk9OX0tFWSA/PyAnJztcblxuaWYgKCFzdXBhYmFzZVVybCB8fCAhc3VwYWJhc2VBbm9uS2V5KSB7XG4gIGNvbnNvbGUud2FybignU3VwYWJhc2UgZW52aXJvbm1lbnQgdmFyaWFibGVzIGFyZSBub3QgY29uZmlndXJlZC4nKTtcbn1cblxubGV0IGJyb3dzZXJDbGllbnQ6IFN1cGFiYXNlQ2xpZW50PERhdGFiYXNlPiB8IG51bGwgPSBudWxsO1xuXG5leHBvcnQgY29uc3QgZ2V0U3VwYWJhc2VDbGllbnQgPSAoKTogU3VwYWJhc2VDbGllbnQ8RGF0YWJhc2U+ID0+IHtcbiAgaWYgKGJyb3dzZXJDbGllbnQpIHJldHVybiBicm93c2VyQ2xpZW50O1xuICBpZiAodHlwZW9mIHdpbmRvdyA9PT0gJ3VuZGVmaW5lZCcpIHtcbiAgICB0aHJvdyBuZXcgRXJyb3IoJ1N1cGFiYXNlIGJyb3dzZXIgY2xpZW50IGNhbm5vdCBiZSB1c2VkIG9uIHRoZSBzZXJ2ZXInKTtcbiAgfVxuICBicm93c2VyQ2xpZW50ID0gY3JlYXRlQ2xpZW50PERhdGFiYXNlPihzdXBhYmFzZVVybCwgc3VwYWJhc2VBbm9uS2V5KTtcbiAgcmV0dXJuIGJyb3dzZXJDbGllbnQ7XG59O1xuXG5leHBvcnQgY29uc3Qgc3VwYWJhc2VDbGllbnQgPSBuZXcgUHJveHkoe30gYXMgU3VwYWJhc2VDbGllbnQ8RGF0YWJhc2U+LCB7XG4gIGdldChfdGFyZ2V0LCBwcm9wKSB7XG4gICAgY29uc3QgY2xpZW50ID0gZ2V0U3VwYWJhc2VDbGllbnQoKTtcbiAgICAvLyBAdHMtZXhwZWN0LWVycm9yIGR5bmFtaWMgcHJveHlcbiAgICByZXR1cm4gY2xpZW50W3Byb3BdO1xuICB9XG59KTtcbiJdLCJuYW1lcyI6WyJjcmVhdGVDbGllbnQiLCJzdXBhYmFzZVVybCIsInByb2Nlc3MiLCJlbnYiLCJORVhUX1BVQkxJQ19TVVBBQkFTRV9VUkwiLCJzdXBhYmFzZUFub25LZXkiLCJORVhUX1BVQkxJQ19TVVBBQkFTRV9BTk9OX0tFWSIsImNvbnNvbGUiLCJ3YXJuIiwiYnJvd3NlckNsaWVudCIsImdldFN1cGFiYXNlQ2xpZW50IiwiRXJyb3IiLCJzdXBhYmFzZUNsaWVudCIsIlByb3h5IiwiZ2V0IiwiX3RhcmdldCIsInByb3AiLCJjbGllbnQiXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///(ssr)/./src/lib/supabase-client.ts\n");
+
+/***/ })
+
+};
+;

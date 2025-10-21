@@ -14,15 +14,17 @@ type MatchWithTeams = MatchRow & {
 };
 
 const fetchMatches = async (eventId: string): Promise<MatchWithTeams[]> => {
-  const { data, error } = await supabaseClient
-    .from('matches')
-    .select(`*, team1:participants(id, team_name), team2:participants(id, team_name)`)
-    .eq('event_id', eventId)
-    .order('round_number', { ascending: true })
-    .order('match_number', { ascending: true });
+  const response = await fetch(`/api/events/${eventId}/matches`, { cache: 'no-store' });
+  const body = (await response.json().catch(() => null)) as
+    | { matches: MatchWithTeams[] }
+    | { error: string }
+    | null;
 
-  if (error) throw error;
-  return data ?? [];
+  if (!response.ok || !body || 'error' in body) {
+    throw new Error(body && 'error' in body ? body.error : 'Unable to load matches');
+  }
+
+  return body.matches ?? [];
 };
 
 export default function LiveBracketView({ eventId }: { eventId: string }) {

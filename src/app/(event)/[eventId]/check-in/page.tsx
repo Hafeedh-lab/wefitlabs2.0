@@ -8,9 +8,8 @@ import confetti from 'canvas-confetti';
 import { Check, Loader2 } from 'lucide-react';
 import { checkInSchema, type CheckInFormValues } from '@/lib/validation';
 import { sanitizeInput } from '@/utils/sanitize';
-import { getSupabaseClient } from '@/lib/supabase-client';
 import { useToast } from '@/components/ui/ToastProvider';
-import { trackEvent, getSessionId } from '@/lib/analytics';
+import { trackEvent } from '@/lib/analytics';
 
 interface CheckInPageProps {
   params: { eventId: string };
@@ -63,22 +62,28 @@ export default function CheckInPage({ params }: CheckInPageProps) {
       team_name: sanitizeInput(values.teamName)?.trim(),
       email: sanitizeInput(values.email ?? '') || null,
       phone: sanitizeInput(values.phone ?? '') || null,
-      consent_marketing: values.consentMarketing,
-      event_id: params.eventId,
-      session_id: getSessionId()
+      consent_marketing: values.consentMarketing
     };
 
-    const supabase = getSupabaseClient();
-    const { error } = await supabase.from('participants').insert({
-      event_id: sanitized.event_id,
-      first_name: sanitized.first_name ?? '',
-      team_name: sanitized.team_name ?? '',
-      email: sanitized.email,
-      phone: sanitized.phone,
-      consent_marketing: sanitized.consent_marketing ?? false
-    } as any);
+    try {
+      const response = await fetch(`/api/events/${params.eventId}/check-in`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: sanitized.first_name,
+          team_name: sanitized.team_name,
+          email: sanitized.email,
+          phone: sanitized.phone,
+          consent_marketing: sanitized.consent_marketing
+        })
+      });
 
-    if (error) {
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        showToast((body && body.error) || 'Unable to complete check-in. Please try again.', 'error');
+        return;
+      }
+    } catch (error) {
       console.error(error);
       showToast('Unable to complete check-in. Please try again.', 'error');
       return;

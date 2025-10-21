@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function JoinCta() {
   return (
     <section className="mt-16 w-full bg-wefit-dark-muted">
@@ -8,14 +10,12 @@ export default function JoinCta() {
           Sign up to get reminders for the next WeFit Labs community showdown and be the first to know when brackets open.
         </p>
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
-          <a
-            href="https://wefitlabs.com/newsletter"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/newsletter"
             className="rounded-lg bg-wefit-primary px-6 py-3 text-base font-semibold text-white shadow-wefit transition-all duration-200 hover:bg-wefit-primary-hover"
           >
             Join the waitlist
-          </a>
+          </Link>
           <a
             href="mailto:events@wefitlabs.com"
             className="rounded-lg border border-wefit-primary px-6 py-3 text-base font-semibold text-wefit-primary transition-all duration-200 hover:bg-wefit-primary/10"

@@ -1,4 +1,30 @@
-node_modules
+node_modules/
+.env
+
+# Next.js build outputs
+.next/
+out/
+build/
+dist/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+*.pem
+
+# Cache
+.cache/
+.swc/
+
+# PWA generated files
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
 .next/
 node_modules/
 out/

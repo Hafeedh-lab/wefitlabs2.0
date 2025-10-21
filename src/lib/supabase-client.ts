@@ -1,5 +1,4 @@
-import { createBrowserClient, createServerClient, type SupabaseClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -11,12 +10,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 let browserClient: SupabaseClient<Database> | null = null;
 
-export const getSupabaseClient = () => {
+export const getSupabaseClient = (): SupabaseClient<Database> => {
   if (browserClient) return browserClient;
   if (typeof window === 'undefined') {
     throw new Error('Supabase browser client cannot be used on the server');
   }
-  browserClient = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
+  browserClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
   return browserClient;
 };
 
@@ -27,14 +26,3 @@ export const supabaseClient = new Proxy({} as SupabaseClient<Database>, {
     return client[prop];
   }
 });
-
-export const createSupabaseServerClient = () => {
-  const cookieStore = cookies();
-  return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value;
-      }
-    }
-  });
-};

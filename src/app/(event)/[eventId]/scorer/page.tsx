@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { supabaseClient } from '@/lib/supabase-client';
+import { getSupabaseClient } from '@/lib/supabase-client';
 import type { Database } from '@/types/database';
 import { offlineQueue } from '@/lib/offline-queue';
 import { cn } from '@/utils/cn';
@@ -10,7 +10,9 @@ import { useToast } from '@/components/ui/ToastProvider';
 import { trackEvent } from '@/lib/analytics';
 import { ChevronDown, ChevronUp, Trophy, Undo2 } from 'lucide-react';
 
-interface MatchWithTeams extends Database['public']['Tables']['matches']['Row'] {
+type MatchRow = Database['public']['Tables']['matches']['Row'];
+
+interface MatchWithTeams extends MatchRow {
   team1?: { id: string; team_name: string } | null;
   team2?: { id: string; team_name: string } | null;
 }
@@ -36,8 +38,10 @@ export default function ScorerPage() {
   useEffect(() => {
     if (!params?.eventId) return;
 
+    const supabase = getSupabaseClient();
+
     const fetchMatches = async () => {
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('matches')
         .select(`*, team1:participants(id, team_name), team2:participants(id, team_name)`)
         .eq('event_id', params.eventId)
@@ -53,9 +57,9 @@ export default function ScorerPage() {
 
     fetchMatches();
 
-    const channel = supabaseClient
+    const channel = supabase
       .channel(`scorer-${params.eventId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches', filter: `event_id=eq.${params.eventId}` }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches', filter: `event_id=eq.${params.eventId}` }, (payload: any) => {
         setMatches((prev) => {
           const updated = prev.map((match) => (match.id === payload.new?.id ? (payload.new as MatchWithTeams) : match));
           return updated;
@@ -64,7 +68,7 @@ export default function ScorerPage() {
       .subscribe();
 
     return () => {
-      supabaseClient.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, [params.eventId, showToast]);
 
@@ -97,7 +101,9 @@ export default function ScorerPage() {
     setHistory((prev) => [{ id: crypto.randomUUID(), matchId: match.id, team, previousScore: (match as any)[column] }, ...prev.slice(0, 4)]);
 
     try {
-      await supabaseClient.from('matches').update(payload).eq('id', match.id);
+      const supabase = getSupabaseClient();
+      // @ts-ignore - Type inference issue with Supabase generic
+      await supabase.from('matches').update(payload).eq('id', match.id);
       trackEvent({ event_type: 'match_update', event_id: params.eventId, metadata: { match_id: match.id, column, newScore } });
     } catch (error) {
       console.error(error);
@@ -116,10 +122,10 @@ export default function ScorerPage() {
       )
     );
     try {
-      await supabaseClient
-        .from('matches')
-        .update({ [column]: last.previousScore, updated_at: new Date().toISOString() })
-        .eq('id', last.matchId);
+      const supabase = getSupabaseClient();
+      const payload = { [column]: last.previousScore, updated_at: new Date().toISOString() };
+      // @ts-ignore - Type inference issue with Supabase generic
+      await supabase.from('matches').update(payload).eq('id', last.matchId);
     } catch (error) {
       console.error(error);
     }
@@ -140,7 +146,9 @@ export default function ScorerPage() {
     };
     setMatches((prev) => prev.map((item) => (item.id === match.id ? ({ ...item, ...payload } as MatchWithTeams) : item)));
     try {
-      await supabaseClient.from('matches').update(payload).eq('id', match.id);
+      const supabase = getSupabaseClient();
+      // @ts-ignore - Type inference issue with Supabase generic
+      await supabase.from('matches').update(payload).eq('id', match.id);
       showToast('Winner saved', 'success');
     } catch (error) {
       console.error(error);
@@ -164,16 +172,20 @@ export default function ScorerPage() {
             </div>
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 setIsSyncing(true);
-                supabaseClient
-                  .from('matches')
-                  .select(`*, team1:participants(id, team_name), team2:participants(id, team_name)`)
-                  .eq('event_id', params.eventId)
-                  .order('round_number', { ascending: true })
-                  .order('match_number', { ascending: true })
-                  .then(({ data }) => setMatches(data ?? []))
-                  .finally(() => setIsSyncing(false));
+                try {
+                  const supabase = getSupabaseClient();
+                  const { data } = await supabase
+                    .from('matches')
+                    .select(`*, team1:participants(id, team_name), team2:participants(id, team_name)`)
+                    .eq('event_id', params.eventId)
+                    .order('round_number', { ascending: true })
+                    .order('match_number', { ascending: true });
+                  setMatches(data ?? []);
+                } finally {
+                  setIsSyncing(false);
+                }
               }}
               className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-wefit-grey transition hover:text-wefit-white"
             >

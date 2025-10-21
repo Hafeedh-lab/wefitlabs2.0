@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from '@/lib/supabase-client';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 import SharePanel from '@/components/features/SharePanel';
 
 interface SharePageProps {

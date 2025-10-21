@@ -85,7 +85,7 @@ export default function SponsorRibbon({ event }: SponsorRibbonProps) {
         onClick={handleClick}
         className="flex w-full max-w-4xl items-center justify-center gap-3 overflow-hidden rounded-full bg-wefit-dark px-4 py-2 text-sm font-medium text-wefit-white transition hover:bg-wefit-dark/80"
       >
-        {activeSlide.logo ? (
+        {'logo' in activeSlide && activeSlide.logo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={activeSlide.logo} alt={event.sponsor_name ?? 'Sponsor'} className="h-8 w-auto object-contain" />
         ) : (

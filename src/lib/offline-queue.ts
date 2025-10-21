@@ -26,25 +26,26 @@ async function getDB() {
 
 async function executeAction(action: QueuedAction) {
   if (typeof window === 'undefined') return;
-  const { supabaseClient } = await import('@/lib/supabase-client');
+  const { getSupabaseClient } = await import('@/lib/supabase-client');
+  const supabase = getSupabaseClient();
 
   switch (action.type) {
-    case 'score_update':
-      await supabaseClient
-        .from('matches')
-        .update(action.payload)
-        .eq('id', action.payload.match_id as string);
+    case 'score_update': {
+      const payload = action.payload as any;
+      // @ts-ignore - Type inference issue with Supabase generic
+      await supabase.from('matches').update(payload).eq('id', payload.match_id as string);
       break;
-    case 'match_complete':
-      await supabaseClient
-        .from('matches')
-        .update({
-          status: 'completed',
-          winner_id: action.payload.winner_id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', action.payload.match_id as string);
+    }
+    case 'match_complete': {
+      const payload = {
+        status: 'completed',
+        winner_id: action.payload.winner_id,
+        updated_at: new Date().toISOString()
+      } as any;
+      // @ts-ignore - Type inference issue with Supabase generic
+      await supabase.from('matches').update(payload).eq('id', action.payload.match_id as string);
       break;
+    }
     default:
       console.warn('Unknown offline action type', action.type);
   }

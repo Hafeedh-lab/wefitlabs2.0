@@ -8,7 +8,7 @@ import { offlineQueue } from '@/lib/offline-queue';
 import { cn } from '@/utils/cn';
 import { useToast } from '@/components/ui/ToastProvider';
 import { trackEvent } from '@/lib/analytics';
-import { ChevronDown, ChevronUp, Trophy, Undo2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trophy, Undo2, AlertTriangle, X, UserX } from 'lucide-react';
 
 type MatchRow = Database['public']['Tables']['matches']['Row'];
 
@@ -26,6 +26,15 @@ type ActionHistoryItem = {
   previousScore: number;
 };
 
+interface DisputeNote {
+  id: string;
+  matchId: string;
+  note: string;
+  reportedBy: 'scorer' | 'participant';
+  timestamp: string;
+  resolved: boolean;
+}
+
 export default function ScorerPage() {
   const params = useParams<{ eventId: string }>();
   const { showToast } = useToast();
@@ -34,6 +43,9 @@ export default function ScorerPage() {
   const [filter, setFilter] = useState<Filter>('in_progress');
   const [isSyncing, setIsSyncing] = useState(false);
   const [history, setHistory] = useState<ActionHistoryItem[]>([]);
+  const [disputes, setDisputes] = useState<Map<string, DisputeNote[]>>(new Map());
+  const [disputeModal, setDisputeModal] = useState<{ matchId: string; matchName: string } | null>(null);
+  const [disputeNote, setDisputeNote] = useState('');
 
   useEffect(() => {
     if (!params?.eventId) return;
@@ -53,6 +65,9 @@ export default function ScorerPage() {
         return;
       }
       setMatches(data ?? []);
+
+      // Load disputes from localStorage
+      loadDisputes();
     };
 
     fetchMatches();
@@ -71,6 +86,70 @@ export default function ScorerPage() {
       supabase.removeChannel(channel);
     };
   }, [params.eventId, showToast]);
+
+  const loadDisputes = () => {
+    try {
+      const stored = localStorage.getItem(`disputes-${params.eventId}`);
+      if (stored) {
+        const disputesArray: DisputeNote[] = JSON.parse(stored);
+        const disputesMap = new Map<string, DisputeNote[]>();
+        disputesArray.forEach(dispute => {
+          const existing = disputesMap.get(dispute.matchId) || [];
+          disputesMap.set(dispute.matchId, [...existing, dispute]);
+        });
+        setDisputes(disputesMap);
+      }
+    } catch (error) {
+      console.error('Failed to load disputes:', error);
+    }
+  };
+
+  const saveDisputes = (newDisputes: Map<string, DisputeNote[]>) => {
+    try {
+      const disputesArray: DisputeNote[] = [];
+      newDisputes.forEach(notes => disputesArray.push(...notes));
+      localStorage.setItem(`disputes-${params.eventId}`, JSON.stringify(disputesArray));
+    } catch (error) {
+      console.error('Failed to save disputes:', error);
+    }
+  };
+
+  const addDisputeNote = () => {
+    if (!disputeModal || !disputeNote.trim()) return;
+
+    const newNote: DisputeNote = {
+      id: crypto.randomUUID(),
+      matchId: disputeModal.matchId,
+      note: disputeNote.trim(),
+      reportedBy: 'scorer',
+      timestamp: new Date().toISOString(),
+      resolved: false
+    };
+
+    const newDisputes = new Map(disputes);
+    const existingNotes = newDisputes.get(disputeModal.matchId) || [];
+    newDisputes.set(disputeModal.matchId, [...existingNotes, newNote]);
+
+    setDisputes(newDisputes);
+    saveDisputes(newDisputes);
+
+    showToast('Dispute note added', 'success');
+    setDisputeNote('');
+    setDisputeModal(null);
+  };
+
+  const resolveDispute = (matchId: string, disputeId: string) => {
+    const newDisputes = new Map(disputes);
+    const matchDisputes = newDisputes.get(matchId) || [];
+    const updated = matchDisputes.map(d =>
+      d.id === disputeId ? { ...d, resolved: true } : d
+    );
+    newDisputes.set(matchId, updated);
+
+    setDisputes(newDisputes);
+    saveDisputes(newDisputes);
+    showToast('Dispute marked as resolved', 'success');
+  };
 
   const groupedByRound = useMemo(() => {
     return matches.reduce<Record<number, MatchWithTeams[]>>((acc, match) => {
@@ -157,6 +236,41 @@ export default function ScorerPage() {
     }
   };
 
+  const handleBYE = async (match: MatchWithTeams) => {
+    if (!match.team1 && !match.team2) {
+      showToast('No teams assigned to this match', 'error');
+      return;
+    }
+
+    if (!confirm('Mark this as a BYE (no-show)? The present team will auto-advance.')) {
+      return;
+    }
+
+    // Determine which team is present (has a higher score or is the only one present)
+    const winnerId = match.team1 ? match.team1.id : match.team2?.id;
+
+    const payload = {
+      status: 'completed',
+      winner_id: winnerId,
+      completed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      team1_score: match.team1 ? 11 : 0,
+      team2_score: match.team2 ? 11 : 0
+    };
+
+    setMatches((prev) => prev.map((item) => (item.id === match.id ? ({ ...item, ...payload } as MatchWithTeams) : item)));
+
+    try {
+      const supabase = getSupabaseClient();
+      // @ts-ignore - Type inference issue with Supabase generic
+      await supabase.from('matches').update(payload).eq('id', match.id);
+      showToast('BYE recorded - team auto-advanced', 'success');
+    } catch (error) {
+      console.error(error);
+      showToast('Failed to record BYE', 'error');
+    }
+  };
+
   return (
     <main className="min-h-screen bg-wefit-dark px-4 pt-24">
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
@@ -237,31 +351,100 @@ export default function ScorerPage() {
                   <div className="divide-y divide-white/5">
                     {roundMatches
                       .filter((match) => filter === 'all' || match.status === filter)
-                      .map((match) => (
-                        <div key={match.id} className="grid gap-4 px-5 py-4 sm:grid-cols-[1.5fr_1fr] sm:items-center">
-                          <div className="space-y-1">
-                            <p className="text-xs uppercase tracking-[0.2em] text-wefit-grey">
-                              Match {match.match_number} • {match.court_number ? `Court ${match.court_number}` : 'Court TBD'}
-                            </p>
-                            <p className="text-lg font-semibold text-wefit-white">
-                              {match.team1?.team_name ?? 'TBD'} vs {match.team2?.team_name ?? 'TBD'}
-                            </p>
-                            <p className="text-xs text-wefit-grey">
-                              Status: {match.status.replace('_', ' ')}
-                            </p>
+                      .map((match) => {
+                        const matchDisputes = disputes.get(match.id) || [];
+                        const unresolvedDisputes = matchDisputes.filter(d => !d.resolved);
+
+                        return (
+                          <div key={match.id} className="grid gap-4 px-5 py-4">
+                            {/* Match header with dispute indicator */}
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-1">
+                                <p className="text-xs uppercase tracking-[0.2em] text-wefit-grey">
+                                  Match {match.match_number} • {match.court_number ? `Court ${match.court_number}` : 'Court TBD'}
+                                </p>
+                                <p className="text-lg font-semibold text-wefit-white">
+                                  {match.team1?.team_name ?? 'TBD'} vs {match.team2?.team_name ?? 'TBD'}
+                                </p>
+                                <p className="text-xs text-wefit-grey">
+                                  Status: {match.status.replace('_', ' ')}
+                                </p>
+                              </div>
+                              {unresolvedDisputes.length > 0 && (
+                                <div className="flex items-center gap-2 rounded-full bg-red-500/10 px-3 py-1 text-xs text-red-400">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  {unresolvedDisputes.length} Dispute{unresolvedDisputes.length > 1 ? 's' : ''}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Disputes list */}
+                            {matchDisputes.length > 0 && (
+                              <div className="space-y-2 rounded-lg bg-wefit-dark p-3">
+                                {matchDisputes.map(dispute => (
+                                  <div
+                                    key={dispute.id}
+                                    className={cn(
+                                      'rounded-lg border p-3 text-sm',
+                                      dispute.resolved
+                                        ? 'border-green-500/20 bg-green-500/10 text-green-400'
+                                        : 'border-red-500/20 bg-red-500/10 text-red-400'
+                                    )}
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1">
+                                        <p className="font-medium">{dispute.note}</p>
+                                        <p className="mt-1 text-xs opacity-70">
+                                          {new Date(dispute.timestamp).toLocaleString()} • {dispute.reportedBy}
+                                        </p>
+                                      </div>
+                                      {!dispute.resolved && (
+                                        <button
+                                          onClick={() => resolveDispute(match.id, dispute.id)}
+                                          className="text-xs underline"
+                                        >
+                                          Resolve
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Match controls */}
+                            <div className="grid gap-3 sm:grid-cols-[1.5fr_1fr] sm:items-start">
+                              <ScoreControls match={match} onUpdate={applyScoreUpdate} />
+                              <div className="flex flex-col gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => declareWinner(match)}
+                                  className="flex items-center justify-center gap-2 rounded-lg border border-wefit-primary px-4 py-2 text-sm font-semibold text-wefit-primary transition hover:bg-wefit-primary/10"
+                                >
+                                  <Trophy className="h-4 w-4" /> Declare winner
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleBYE(match)}
+                                  className="flex items-center justify-center gap-2 rounded-lg border border-yellow-500/50 px-4 py-2 text-sm font-semibold text-yellow-400 transition hover:bg-yellow-500/10"
+                                >
+                                  <UserX className="h-4 w-4" /> Mark as BYE
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDisputeModal({
+                                    matchId: match.id,
+                                    matchName: `${match.team1?.team_name ?? 'TBD'} vs ${match.team2?.team_name ?? 'TBD'}`
+                                  })}
+                                  className="flex items-center justify-center gap-2 rounded-lg border border-red-500/50 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
+                                >
+                                  <AlertTriangle className="h-4 w-4" /> Add dispute note
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex flex-col gap-3">
-                            <ScoreControls match={match} onUpdate={applyScoreUpdate} />
-                            <button
-                              type="button"
-                              onClick={() => declareWinner(match)}
-                              className="flex items-center justify-center gap-2 rounded-lg border border-wefit-primary px-4 py-2 text-sm font-semibold text-wefit-primary transition hover:bg-wefit-primary/10"
-                            >
-                              <Trophy className="h-4 w-4" /> Declare winner
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                   </div>
                 )}
               </div>
@@ -269,6 +452,52 @@ export default function ScorerPage() {
           })}
         </section>
       </div>
+
+      {/* Dispute Modal */}
+      {disputeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-wefit-dark-muted p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-wefit-white">Add Dispute Note</h2>
+              <button
+                onClick={() => {
+                  setDisputeModal(null);
+                  setDisputeNote('');
+                }}
+                className="text-wefit-grey hover:text-wefit-white"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <p className="mb-4 text-sm text-wefit-grey">{disputeModal.matchName}</p>
+            <textarea
+              value={disputeNote}
+              onChange={(e) => setDisputeNote(e.target.value)}
+              placeholder="Describe the issue or dispute..."
+              className="mb-4 w-full rounded-lg border border-white/10 bg-wefit-dark p-3 text-wefit-white placeholder:text-wefit-grey focus:border-wefit-primary focus:outline-none focus:ring-2 focus:ring-wefit-primary/30"
+              rows={4}
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setDisputeModal(null);
+                  setDisputeNote('');
+                }}
+                className="flex-1 rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-wefit-grey hover:text-wefit-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={addDisputeNote}
+                disabled={!disputeNote.trim()}
+                className="flex-1 rounded-lg bg-wefit-primary px-4 py-2 text-sm font-semibold text-white hover:bg-wefit-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Add Note
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

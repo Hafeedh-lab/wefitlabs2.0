@@ -93,7 +93,7 @@ async function main() {
           updated_at: new Date().toISOString()
         } as any)
         .select()
-        .single();
+        .single() as { data: { id: string }; error: any };
 
       if (eventError) throw eventError;
       eventId = newEvent.id;

@@ -63,7 +63,7 @@ async function main() {
       .from('events')
       .select('id')
       .eq('name', 'Friday Night Smash - Demo')
-      .maybeSingle();
+      .maybeSingle() as { data: { id: string } | null; error: any };
 
     let eventId: string;
 

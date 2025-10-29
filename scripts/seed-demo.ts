@@ -137,15 +137,15 @@ async function main() {
       const status = i < 5 ? 'completed' : i < 7 ? 'in_progress' : 'pending';
       const team1Score = status === 'completed' ? Math.floor(Math.random() * 6) + 7 : i < 7 ? Math.floor(Math.random() * 8) : 0;
       const team2Score = status === 'completed' ? Math.floor(Math.random() * team1Score) : i < 7 ? Math.floor(Math.random() * 8) : 0;
-      const winnerId = status === 'completed' ? (team1Score > team2Score ? team1.id : team2.id) : null;
+      const winnerId = status === 'completed' ? (team1Score > team2Score ? (team1 as { id: string }).id : (team2 as { id: string }).id) : null;
 
       round1Matches.push({
         event_id: eventId,
         round_number: 1,
         match_number: i + 1,
         court_number: (i % 4) + 1,
-        team1_id: team1.id,
-        team2_id: team2.id,
+        team1_id: (team1 as { id: string }).id,
+        team2_id: (team2 as { id: string }).id,
         team1_score: team1Score,
         team2_score: team2Score,
         winner_id: winnerId,

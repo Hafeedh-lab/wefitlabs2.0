@@ -8,6 +8,7 @@ import { Database } from '@/types/database';
 
 type Participant = Database['public']['Tables']['participants']['Row'];
 type Event = Database['public']['Tables']['events']['Row'];
+type AnalyticsEvent = Database['public']['Tables']['analytics_events']['Row'];
 
 interface EventMetrics {
   checkIns: number;
@@ -175,7 +176,7 @@ export default function AdminPage({ params }: AdminPageProps) {
 
       // Create CSV content
       const headers = ['Event Type', 'Session ID', 'User Agent', 'Metadata', 'Timestamp'];
-      const rows = (analyticsEvents || []).map(e => [
+      const rows = ((analyticsEvents || []) as AnalyticsEvent[]).map(e => [
         e.event_type,
         e.session_id || 'N/A',
         e.user_agent || 'N/A',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getSupabaseClient } from '@/lib/supabase-client';
 import { Download, RefreshCw, Play, Pause, Trash2, Users, Eye, Clock, TrendingUp } from 'lucide-react';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -8,6 +8,7 @@ import { Database } from '@/types/database';
 
 type Participant = Database['public']['Tables']['participants']['Row'];
 type Event = Database['public']['Tables']['events']['Row'];
+type AnalyticsEvent = Database['public']['Tables']['analytics_events']['Row'];
 
 interface EventMetrics {
   checkIns: number;
@@ -30,6 +31,66 @@ export default function AdminPage({ params }: AdminPageProps) {
   const [metrics, setMetrics] = useState<EventMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState('');
+
+  const loadEvent = useCallback(async () => {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', params.eventId)
+      .single();
+
+    if (error) throw error;
+    setEvent(data);
+  }, [params.eventId]);
+
+  const loadParticipants = useCallback(async () => {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from('participants')
+      .select('*')
+      .eq('event_id', params.eventId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    setParticipants(data || []);
+  }, [params.eventId]);
+
+  const loadMetrics = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/events/${params.eventId}/metrics`);
+      if (!response.ok) throw new Error('Failed to fetch metrics');
+      const data = await response.json();
+      setMetrics(data);
+    } catch (error) {
+      console.error('Failed to load metrics:', error);
+      setMetrics({
+        checkIns: participants.filter(p => p.checked_in_at).length,
+        uniqueViewers: 0,
+        avgDwellTime: 0,
+        sponsorCTR: 0,
+        sponsorViews: 0,
+        sponsorClicks: 0,
+        topReferrer: 'Direct'
+      });
+    }
+  }, [params.eventId, participants]);
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      await Promise.all([
+        loadEvent(),
+        loadParticipants(),
+        loadMetrics()
+      ]);
+    } catch (error) {
+      console.error('Failed to load admin data:', error);
+      showToast('Failed to load dashboard data', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [loadEvent, loadParticipants, loadMetrics, showToast]);
 
   useEffect(() => {
     loadData();
@@ -56,67 +117,7 @@ export default function AdminPage({ params }: AdminPageProps) {
     return () => {
       participantsChannel.unsubscribe();
     };
-  }, [params.eventId]);
-
-  async function loadData() {
-    try {
-      setLoading(true);
-      await Promise.all([
-        loadEvent(),
-        loadParticipants(),
-        loadMetrics()
-      ]);
-    } catch (error) {
-      console.error('Failed to load admin data:', error);
-      showToast('Failed to load dashboard data', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadEvent() {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', params.eventId)
-      .single();
-
-    if (error) throw error;
-    setEvent(data);
-  }
-
-  async function loadParticipants() {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from('participants')
-      .select('*')
-      .eq('event_id', params.eventId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    setParticipants(data || []);
-  }
-
-  async function loadMetrics() {
-    try {
-      const response = await fetch(`/api/events/${params.eventId}/metrics`);
-      if (!response.ok) throw new Error('Failed to fetch metrics');
-      const data = await response.json();
-      setMetrics(data);
-    } catch (error) {
-      console.error('Failed to load metrics:', error);
-      setMetrics({
-        checkIns: participants.filter(p => p.checked_in_at).length,
-        uniqueViewers: 0,
-        avgDwellTime: 0,
-        sponsorCTR: 0,
-        sponsorViews: 0,
-        sponsorClicks: 0,
-        topReferrer: 'Direct'
-      });
-    }
-  }
+  }, [params.eventId, loadData, loadParticipants]);
 
   async function exportParticipantsCsv() {
     try {
@@ -175,7 +176,7 @@ export default function AdminPage({ params }: AdminPageProps) {
 
       // Create CSV content
       const headers = ['Event Type', 'Session ID', 'User Agent', 'Metadata', 'Timestamp'];
-      const rows = (analyticsEvents || []).map(e => [
+      const rows = (analyticsEvents as AnalyticsEvent[] | null || []).map(e => [
         e.event_type,
         e.session_id || 'N/A',
         e.user_agent || 'N/A',
@@ -210,9 +211,14 @@ export default function AdminPage({ params }: AdminPageProps) {
     try {
       setActionLoading(`status-${status}`);
       const supabase = getSupabaseClient();
+      const updateData: Database['public']['Tables']['events']['Update'] = {
+        status,
+        updated_at: new Date().toISOString()
+      };
       const { error } = await supabase
         .from('events')
-        .update({ status, updated_at: new Date().toISOString() })
+        // @ts-expect-error - Supabase type inference issue
+        .update(updateData)
         .eq('id', params.eventId);
 
       if (error) throw error;

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 
+type Event = Database['public']['Tables']['events']['Row'];
+type Participant = Database['public']['Tables']['participants']['Row'];
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
@@ -52,6 +55,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const typedEvent = event as Event;
+
     // Get participants (either specific one or all checked-in participants)
     const query = supabase
       .from('participants')
@@ -67,14 +72,16 @@ export async function POST(request: NextRequest) {
 
     if (participantsError) throw participantsError;
 
-    if (!participants || participants.length === 0) {
+    const typedParticipants = participants as Participant[] | null;
+
+    if (!typedParticipants || typedParticipants.length === 0) {
       return NextResponse.json(
         { error: 'No eligible participants found' },
         { status: 404 }
       );
     }
 
-    const eventDate = new Date(event.date);
+    const eventDate = new Date(typedEvent.date);
     const eventTime = eventDate.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
@@ -95,7 +102,7 @@ export async function POST(request: NextRequest) {
     const sentReminders = new Set<string>();
 
     // Send reminders
-    for (const participant of participants) {
+    for (const participant of typedParticipants) {
       const participantKey = `${rateLimitKey}-${participant.id}`;
 
       // Check if already sent (using a simple in-memory check for demo)
@@ -114,9 +121,9 @@ export async function POST(request: NextRequest) {
           await sendEmail(
             participant.email,
             participant.first_name,
-            event.name,
+            typedEvent.name,
             eventTime,
-            event.location || 'WeFit Labs NYC',
+            typedEvent.location || 'WeFit Labs NYC',
             eventLink
           );
           emailSent = true;
@@ -132,7 +139,7 @@ export async function POST(request: NextRequest) {
           await sendSMS(
             participant.phone,
             participant.first_name,
-            event.name,
+            typedEvent.name,
             eventTime,
             eventLink
           );
@@ -154,7 +161,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       eventId,
-      participantsCount: participants.length,
+      participantsCount: typedParticipants.length,
       ...results,
       message: `Sent ${results.sent} reminders, ${results.failed} failed, ${results.skipped} skipped`
     });

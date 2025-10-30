@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { getSupabaseClient } from '@/lib/supabase-client';
 import type { Database } from '@/types/database';
@@ -47,6 +47,23 @@ export default function ScorerPage() {
   const [disputeModal, setDisputeModal] = useState<{ matchId: string; matchName: string } | null>(null);
   const [disputeNote, setDisputeNote] = useState('');
 
+  const loadDisputes = useCallback(() => {
+    try {
+      const stored = localStorage.getItem(`disputes-${params.eventId}`);
+      if (stored) {
+        const disputesArray: DisputeNote[] = JSON.parse(stored);
+        const disputesMap = new Map<string, DisputeNote[]>();
+        disputesArray.forEach(dispute => {
+          const existing = disputesMap.get(dispute.matchId) || [];
+          disputesMap.set(dispute.matchId, [...existing, dispute]);
+        });
+        setDisputes(disputesMap);
+      }
+    } catch (error) {
+      console.error('Failed to load disputes:', error);
+    }
+  }, [params.eventId]);
+
   useEffect(() => {
     if (!params?.eventId) return;
 
@@ -85,24 +102,7 @@ export default function ScorerPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [params.eventId, showToast]);
-
-  const loadDisputes = () => {
-    try {
-      const stored = localStorage.getItem(`disputes-${params.eventId}`);
-      if (stored) {
-        const disputesArray: DisputeNote[] = JSON.parse(stored);
-        const disputesMap = new Map<string, DisputeNote[]>();
-        disputesArray.forEach(dispute => {
-          const existing = disputesMap.get(dispute.matchId) || [];
-          disputesMap.set(dispute.matchId, [...existing, dispute]);
-        });
-        setDisputes(disputesMap);
-      }
-    } catch (error) {
-      console.error('Failed to load disputes:', error);
-    }
-  };
+  }, [params.eventId, showToast, loadDisputes]);
 
   const saveDisputes = (newDisputes: Map<string, DisputeNote[]>) => {
     try {

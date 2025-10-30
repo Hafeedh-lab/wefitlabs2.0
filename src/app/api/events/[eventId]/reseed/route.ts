@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 
+type Participant = Database['public']['Tables']['participants']['Row'];
+type Match = Database['public']['Tables']['matches']['Row'];
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
@@ -40,7 +43,9 @@ export async function POST(
 
     if (participantsError) throw participantsError;
 
-    if (!participants || participants.length < 2) {
+    const typedParticipants = participants as Pick<Participant, 'id' | 'team_name'>[] | null;
+
+    if (!typedParticipants || typedParticipants.length < 2) {
       return NextResponse.json(
         { error: 'Not enough participants to create bracket' },
         { status: 400 }
@@ -56,7 +61,7 @@ export async function POST(
     if (deleteError) throw deleteError;
 
     // Shuffle participants for random seeding
-    const shuffled = [...participants].sort(() => Math.random() - 0.5);
+    const shuffled = [...typedParticipants].sort(() => Math.random() - 0.5);
 
     // Calculate number of rounds needed
     const numParticipants = shuffled.length;

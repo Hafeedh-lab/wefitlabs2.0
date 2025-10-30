@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 
+type Event = Database['public']['Tables']['events']['Row'];
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
@@ -42,6 +44,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const typedEvent = event as Event;
+
     // Track redemption in sponsor_interactions
     const { error: trackError } = await supabase
       .from('sponsor_interactions')
@@ -60,8 +64,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       code,
-      sponsor: event.sponsor_name || 'WeFit Labs',
-      offer: event.sponsor_cta_text || 'Exclusive offer for participants',
+      sponsor: typedEvent.sponsor_name || 'WeFit Labs',
+      offer: typedEvent.sponsor_cta_text || 'Exclusive offer for participants',
       message: 'Code redeemed successfully! Show this at the sponsor booth.',
       redeemedAt: new Date().toISOString()
     });

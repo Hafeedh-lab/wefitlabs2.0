@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { offlineQueue } from '@/lib/offline-queue';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -13,6 +13,26 @@ export default function ServiceWorkerRegistration() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installPromptShown, setInstallPromptShown] = useState(false);
   const [interactionCount, setInteractionCount] = useState(0);
+
+  const showInstallPrompt = useCallback(async () => {
+    if (!deferredPrompt) return;
+
+    setInstallPromptShown(true);
+
+    // Show the install prompt
+    await deferredPrompt.prompt();
+
+    // Wait for the user's response
+    const choiceResult = await deferredPrompt.userChoice;
+
+    if (choiceResult.outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+    } else {
+      console.log('User dismissed the install prompt');
+    }
+
+    setDeferredPrompt(null);
+  }, [deferredPrompt]);
 
   useEffect(() => {
     // Service Worker Registration
@@ -103,6 +123,7 @@ export default function ServiceWorkerRegistration() {
     if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
       navigator.serviceWorker.ready.then((registration) => {
         // Register sync for offline updates
+        // @ts-expect-error - sync not in TypeScript types yet
         return registration.sync.register('sync-offline-queue');
       }).catch(console.error);
     }
@@ -122,27 +143,7 @@ export default function ServiceWorkerRegistration() {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, [deferredPrompt, installPromptShown]);
-
-  const showInstallPrompt = async () => {
-    if (!deferredPrompt) return;
-
-    setInstallPromptShown(true);
-
-    // Show the install prompt
-    await deferredPrompt.prompt();
-
-    // Wait for the user's response
-    const choiceResult = await deferredPrompt.userChoice;
-
-    if (choiceResult.outcome === 'accepted') {
-      console.log('User accepted the install prompt');
-    } else {
-      console.log('User dismissed the install prompt');
-    }
-
-    setDeferredPrompt(null);
-  };
+  }, [deferredPrompt, installPromptShown, showInstallPrompt]);
 
   // Install button component (can be triggered manually)
   useEffect(() => {
@@ -150,7 +151,7 @@ export default function ServiceWorkerRegistration() {
     if (typeof window !== 'undefined') {
       (window as any).showPWAInstall = showInstallPrompt;
     }
-  }, [deferredPrompt]);
+  }, [showInstallPrompt]);
 
   return null; // This is a headless component
 }

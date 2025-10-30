@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 
+type Participant = Database['public']['Tables']['participants']['Row'];
+type AnalyticsEvent = Database['public']['Tables']['analytics_events']['Row'];
+type SponsorInteraction = Database['public']['Tables']['sponsor_interactions']['Row'];
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
@@ -22,7 +26,7 @@ export async function GET(
 
     if (participantsError) throw participantsError;
 
-    const checkIns = participants?.filter(p => p.checked_in_at).length || 0;
+    const checkIns = (participants as Pick<Participant, 'id' | 'checked_in_at'>[] | null)?.filter(p => p.checked_in_at).length || 0;
 
     // Get analytics events
     const { data: analyticsEvents, error: analyticsError } = await supabase
@@ -32,16 +36,18 @@ export async function GET(
 
     if (analyticsError) throw analyticsError;
 
+    const typedAnalyticsEvents = analyticsEvents as AnalyticsEvent[] | null;
+
     // Calculate unique viewers (unique session_ids)
     const uniqueSessions = new Set(
-      analyticsEvents
+      typedAnalyticsEvents
         ?.filter(e => e.session_id)
         .map(e => e.session_id!) || []
     );
     const uniqueViewers = uniqueSessions.size;
 
     // Calculate average dwell time
-    const dwellEvents = analyticsEvents?.filter(e => e.event_type === 'dwell_time') || [];
+    const dwellEvents = typedAnalyticsEvents?.filter(e => e.event_type === 'dwell_time') || [];
     const totalDwellTime = dwellEvents.reduce((sum, e) => {
       const metadata = e.metadata as any;
       return sum + (metadata?.dwell_time_seconds || 0);
@@ -56,13 +62,15 @@ export async function GET(
 
     if (sponsorError) throw sponsorError;
 
-    const sponsorViews = sponsorInteractions?.filter(i => i.interaction_type === 'view').length || 0;
-    const sponsorClicks = sponsorInteractions?.filter(i => i.interaction_type === 'click').length || 0;
+    const typedSponsorInteractions = sponsorInteractions as Pick<SponsorInteraction, 'interaction_type'>[] | null;
+
+    const sponsorViews = typedSponsorInteractions?.filter(i => i.interaction_type === 'view').length || 0;
+    const sponsorClicks = typedSponsorInteractions?.filter(i => i.interaction_type === 'click').length || 0;
     const sponsorCTR = sponsorViews > 0 ? (sponsorClicks / sponsorViews) * 100 : 0;
 
     // Calculate top referrer
     const referrerCounts = new Map<string, number>();
-    analyticsEvents?.forEach(e => {
+    typedAnalyticsEvents?.forEach(e => {
       const metadata = e.metadata as any;
       const referrer = metadata?.referrer || 'Direct';
       const hostname = referrer === 'Direct' ? 'Direct' :

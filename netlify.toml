@@ -1,4 +1,5 @@
 [build]
+  base = "wefitlabs2.0"
   command = "npm run build"
   publish = ".next"
 

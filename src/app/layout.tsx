@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/utils/cn';
 import { ToastProvider } from '@/components/ui/ToastProvider';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 import OfflineIndicator from '@/components/layout/OfflineIndicator';
 import ServiceWorkerRegistration from './register-sw';
 
@@ -43,11 +44,13 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body className={cn('bg-wefit-dark text-wefit-white min-h-screen', inter.variable, jetbrains.variable)}>
-        <ToastProvider>
-          <ServiceWorkerRegistration />
-          {children}
-          <OfflineIndicator />
-        </ToastProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <ServiceWorkerRegistration />
+            {children}
+            <OfflineIndicator />
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   );

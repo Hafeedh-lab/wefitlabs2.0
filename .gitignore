@@ -7,6 +7,9 @@ out/
 build/
 dist/
 
+# Netlify
+.netlify/
+
 # Debug logs
 npm-debug.log*
 yarn-debug.log*

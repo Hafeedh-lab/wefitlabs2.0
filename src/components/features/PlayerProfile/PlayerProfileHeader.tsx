@@ -5,11 +5,12 @@
  * Displays avatar, name, rating, and bio
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { PlayerProfile, PlayerStats } from '@/types/database-extended';
 import { eloSystem } from '@/lib/elo-system';
 import { Trophy, MapPin, Calendar, Edit } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { EditProfileModal } from '@/components/features/EditProfileModal';
 
 interface PlayerProfileHeaderProps {
   profile: PlayerProfile;
@@ -18,6 +19,7 @@ interface PlayerProfileHeaderProps {
 
 export function PlayerProfileHeader({ profile, stats }: PlayerProfileHeaderProps) {
   const { user } = useAuth();
+  const [showEditModal, setShowEditModal] = useState(false);
   const isOwnProfile = user?.id === profile.user_id;
   const skillBracket = eloSystem.getSkillBracket(profile.skill_rating);
 
@@ -34,98 +36,106 @@ export function PlayerProfileHeader({ profile, stats }: PlayerProfileHeaderProps
     : 0;
 
   return (
-    <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-2xl p-8 shadow-2xl">
-      <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-        {/* Avatar */}
-        <div className="relative">
-          {profile.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt={profile.display_name}
-              className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-yellow-500/50"
-            />
-          ) : (
-            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center ring-4 ring-yellow-500/50">
-              <span className="text-4xl md:text-5xl font-bold text-black">{initials}</span>
+    <>
+      <EditProfileModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        profile={profile}
+        onUpdate={() => window.location.reload()}
+      />
+      <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-2xl p-8 shadow-2xl">
+        <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
+          {/* Avatar */}
+          <div className="relative">
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.display_name}
+                className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-yellow-500/50"
+              />
+            ) : (
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center ring-4 ring-yellow-500/50">
+                <span className="text-4xl md:text-5xl font-bold text-black">{initials}</span>
+              </div>
+            )}
+
+            {/* Skill Badge */}
+            <div
+              className="absolute -bottom-2 -right-2 px-3 py-1 rounded-full text-xs font-bold shadow-lg"
+              style={{ backgroundColor: skillBracket.color }}
+            >
+              {skillBracket.label}
             </div>
-          )}
-
-          {/* Skill Badge */}
-          <div
-            className="absolute -bottom-2 -right-2 px-3 py-1 rounded-full text-xs font-bold shadow-lg"
-            style={{ backgroundColor: skillBracket.color }}
-          >
-            {skillBracket.label}
           </div>
-        </div>
 
-        {/* Info */}
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                {profile.display_name}
-              </h1>
+          {/* Info */}
+          <div className="flex-1">
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                  {profile.display_name}
+                </h1>
 
-              <div className="flex flex-wrap items-center gap-4 text-gray-400 text-sm mb-4">
-                {profile.location && (
+                <div className="flex flex-wrap items-center gap-4 text-gray-400 text-sm mb-4">
+                  {profile.location && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      {profile.location}
+                    </div>
+                  )}
                   <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    {profile.location}
+                    <Calendar className="w-4 h-4" />
+                    Member since {new Date(profile.member_since).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </div>
-                )}
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  Member since {new Date(profile.member_since).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </div>
+
+                {profile.bio && (
+                  <p className="text-gray-300 max-w-2xl mb-4">{profile.bio}</p>
+                )}
               </div>
 
-              {profile.bio && (
-                <p className="text-gray-300 max-w-2xl mb-4">{profile.bio}</p>
+              {isOwnProfile && (
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  Edit Profile
+                </button>
               )}
             </div>
 
-            {isOwnProfile && (
-              <button
-                onClick={() => {/* TODO: Open edit modal */}}
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center gap-2"
-              >
-                <Edit className="w-4 h-4" />
-                Edit Profile
-              </button>
-            )}
-          </div>
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="text-gray-400 text-sm mb-1">Rating</div>
+                <div className="text-2xl font-bold text-yellow-500">{profile.skill_rating}</div>
+              </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-            <div className="bg-gray-800/50 rounded-lg p-4">
-              <div className="text-gray-400 text-sm mb-1">Rating</div>
-              <div className="text-2xl font-bold text-yellow-500">{profile.skill_rating}</div>
-            </div>
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="text-gray-400 text-sm mb-1">Matches</div>
+                <div className="text-2xl font-bold text-white">{stats?.matches_played || 0}</div>
+              </div>
 
-            <div className="bg-gray-800/50 rounded-lg p-4">
-              <div className="text-gray-400 text-sm mb-1">Matches</div>
-              <div className="text-2xl font-bold text-white">{stats?.matches_played || 0}</div>
-            </div>
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="text-gray-400 text-sm mb-1">Win Rate</div>
+                <div className="text-2xl font-bold text-green-500">{winRate}%</div>
+              </div>
 
-            <div className="bg-gray-800/50 rounded-lg p-4">
-              <div className="text-gray-400 text-sm mb-1">Win Rate</div>
-              <div className="text-2xl font-bold text-green-500">{winRate}%</div>
-            </div>
-
-            <div className="bg-gray-800/50 rounded-lg p-4">
-              <div className="text-gray-400 text-sm mb-1">Streak</div>
-              <div className="text-2xl font-bold text-orange-500 flex items-center gap-1">
-                {stats?.current_win_streak && stats.current_win_streak > 0 ? (
-                  <>🔥 {stats.current_win_streak}</>
-                ) : (
-                  '0'
-                )}
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="text-gray-400 text-sm mb-1">Streak</div>
+                <div className="text-2xl font-bold text-orange-500 flex items-center gap-1">
+                  {stats?.current_win_streak && stats.current_win_streak > 0 ? (
+                    <>🔥 {stats.current_win_streak}</>
+                  ) : (
+                    '0'
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -9,6 +9,8 @@ import { Check, Loader2 } from 'lucide-react';
 import { checkInSchema, type CheckInFormValues } from '@/lib/validation';
 import { sanitizeInput } from '@/utils/sanitize';
 import { useToast } from '@/components/ui/ToastProvider';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { CreateProfileModal } from '@/components/features/CreateProfileModal';
 import { trackEvent } from '@/lib/analytics';
 
 interface CheckInPageProps {
@@ -20,6 +22,9 @@ export default function CheckInPage({ params }: CheckInPageProps) {
   const searchParams = useSearchParams();
   const source = searchParams.get('source');
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const [showCreateProfile, setShowCreateProfile] = useState(false);
+  const [submittedName, setSubmittedName] = useState<string>('');
 
   const {
     register,
@@ -49,12 +54,45 @@ export default function CheckInPage({ params }: CheckInPageProps) {
   useEffect(() => {
     if (isSubmitSuccessful) {
       confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
-      const timeout = setTimeout(() => {
-        router.push(`/${params.eventId}`);
-      }, 2000);
-      return () => clearTimeout(timeout);
+
+      // Check if user is authenticated and should create profile
+      const checkProfileStatus = async () => {
+        if (user) {
+          try {
+            // Check if user already has a profile
+            const response = await fetch('/api/players/create', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ display_name: submittedName }),
+            });
+
+            if (response.status === 409) {
+              // Profile exists, just redirect
+              const timeout = setTimeout(() => {
+                router.push(`/${params.eventId}`);
+              }, 2000);
+              return () => clearTimeout(timeout);
+            }
+          } catch (error) {
+            // Ignore errors, just redirect
+          }
+
+          // Show profile creation modal after 2 seconds
+          setTimeout(() => {
+            setShowCreateProfile(true);
+          }, 2000);
+        } else {
+          // Not authenticated, just redirect
+          const timeout = setTimeout(() => {
+            router.push(`/${params.eventId}`);
+          }, 2000);
+          return () => clearTimeout(timeout);
+        }
+      };
+
+      checkProfileStatus();
     }
-  }, [isSubmitSuccessful, params.eventId, router]);
+  }, [isSubmitSuccessful, params.eventId, router, user, submittedName]);
 
   const onSubmit = handleSubmit(async (values) => {
     const sanitized = {
@@ -64,6 +102,9 @@ export default function CheckInPage({ params }: CheckInPageProps) {
       phone: sanitizeInput(values.phone ?? '') || null,
       consent_marketing: values.consentMarketing
     };
+
+    // Store name for profile creation
+    setSubmittedName(sanitized.first_name || '');
 
     try {
       const response = await fetch(`/api/events/${params.eventId}/check-in`, {
@@ -102,8 +143,17 @@ export default function CheckInPage({ params }: CheckInPageProps) {
   });
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-wefit-dark px-4 pt-24">
-      <div className="w-full max-w-md rounded-2xl border border-white/5 bg-wefit-dark-muted p-6 shadow-wefit">
+    <>
+      <CreateProfileModal
+        isOpen={showCreateProfile}
+        onClose={() => {
+          setShowCreateProfile(false);
+          router.push(`/${params.eventId}`);
+        }}
+        initialDisplayName={submittedName}
+      />
+      <main className="flex min-h-screen flex-col items-center bg-wefit-dark px-4 pt-24">
+        <div className="w-full max-w-md rounded-2xl border border-white/5 bg-wefit-dark-muted p-6 shadow-wefit">
         <div className="mb-6 space-y-2 text-center">
           <p className="text-sm uppercase tracking-[0.2em] text-wefit-grey">WeFit Labs Check-In</p>
           <h1 className="heading-md">You&apos;re almost on court</h1>
@@ -179,6 +229,7 @@ export default function CheckInPage({ params }: CheckInPageProps) {
         </form>
       </div>
     </main>
+    </>
   );
 }
 

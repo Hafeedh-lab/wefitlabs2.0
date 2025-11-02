@@ -14,7 +14,24 @@ export function UserMenu() {
   const { user, signOut, loading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user's profile ID
+  useEffect(() => {
+    if (user) {
+      fetch('/api/players/me')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.profile?.id) {
+            setProfileId(data.profile.id);
+          }
+        })
+        .catch(() => {
+          // Ignore errors
+        });
+    }
+  }, [user]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -84,20 +101,26 @@ export function UserMenu() {
           </div>
 
           <div className="py-1">
-            <a
-              href="/profile"
-              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors"
-            >
-              <User className="w-4 h-4" />
-              My Profile
-            </a>
-            <a
-              href="/profile/stats"
-              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors"
-            >
-              <Trophy className="w-4 h-4" />
-              Stats & Achievements
-            </a>
+            {profileId ? (
+              <a
+                href={`/player/${profileId}`}
+                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                My Profile
+              </a>
+            ) : (
+              <button
+                onClick={() => {
+                  setShowDropdown(false);
+                  // Open create profile modal - handled by page
+                }}
+                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                Create Profile
+              </button>
+            )}
             <a
               href="/settings"
               className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors"

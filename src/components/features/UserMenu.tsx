@@ -50,8 +50,8 @@ export function UserMenu() {
   if (loading) {
     return (
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-gray-800 rounded-full animate-pulse" />
-        <div className="w-20 h-4 bg-gray-800 rounded animate-pulse hidden sm:block" />
+        <div className="w-8 h-8 bg-wefit-dark-muted rounded-full animate-pulse" />
+        <div className="w-20 h-4 bg-wefit-dark-muted rounded animate-pulse hidden sm:block" />
       </div>
     );
   }
@@ -61,7 +61,7 @@ export function UserMenu() {
       <>
         <button
           onClick={() => setShowAuthModal(true)}
-          className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-lg transition-colors text-sm"
+          className="px-4 py-2 bg-wefit-primary hover:bg-wefit-primary-hover text-white font-semibold rounded-lg transition-colors text-sm shadow-wefit"
         >
           Sign In
         </button>
@@ -82,29 +82,29 @@ export function UserMenu() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800/50 transition-colors"
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-wefit-dark-muted/50 transition-colors"
       >
-        <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center text-black font-bold text-sm">
+        <div className="w-8 h-8 bg-gradient-to-br from-wefit-gold to-yellow-600 rounded-full flex items-center justify-center text-black font-bold text-sm">
           {initials}
         </div>
-        <span className="text-sm font-medium text-white hidden sm:block">{displayName}</span>
+        <span className="text-sm font-medium text-wefit-white hidden sm:block">{displayName}</span>
         <ChevronDown
-          className={`w-4 h-4 text-gray-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-wefit-grey transition-transform ${showDropdown ? 'rotate-180' : ''}`}
         />
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-56 bg-gray-900 border border-gray-800 rounded-lg shadow-xl overflow-hidden z-50">
-          <div className="px-4 py-3 border-b border-gray-800">
-            <p className="text-sm font-medium text-white">{displayName}</p>
-            <p className="text-xs text-gray-400 truncate">{user.email}</p>
+        <div className="absolute right-0 mt-2 w-56 bg-wefit-dark border border-white/5 rounded-lg shadow-xl overflow-hidden z-50">
+          <div className="px-4 py-3 border-b border-white/5">
+            <p className="text-sm font-medium text-wefit-white">{displayName}</p>
+            <p className="text-xs text-wefit-grey truncate">{user.email}</p>
           </div>
 
           <div className="py-1">
             {profileId ? (
               <a
                 href={`/player/${profileId}`}
-                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-3 px-4 py-2 text-sm text-wefit-grey hover:bg-wefit-dark-muted transition-colors"
               >
                 <User className="w-4 h-4" />
                 My Profile
@@ -115,7 +115,7 @@ export function UserMenu() {
                   setShowDropdown(false);
                   // Open create profile modal - handled by page
                 }}
-                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-wefit-grey hover:bg-wefit-dark-muted transition-colors"
               >
                 <User className="w-4 h-4" />
                 Create Profile
@@ -123,17 +123,17 @@ export function UserMenu() {
             )}
             <a
               href="/settings"
-              className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-3 px-4 py-2 text-sm text-wefit-grey hover:bg-wefit-dark-muted transition-colors"
             >
               <Settings className="w-4 h-4" />
               Settings
             </a>
           </div>
 
-          <div className="border-t border-gray-800 py-1">
+          <div className="border-t border-white/5 py-1">
             <button
               onClick={signOut}
-              className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-400 hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-3 w-full px-4 py-2 text-sm text-wefit-error hover:bg-wefit-dark-muted transition-colors"
             >
               <LogOut className="w-4 h-4" />
               Sign Out

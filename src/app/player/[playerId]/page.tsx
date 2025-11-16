@@ -48,7 +48,7 @@ export default async function PlayerProfilePage({ params }: PageProps) {
     .limit(6);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-black">
+    <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Profile Header */}
         <PlayerProfileHeader profile={profile} stats={stats} />

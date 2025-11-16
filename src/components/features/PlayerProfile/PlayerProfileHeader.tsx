@@ -43,7 +43,7 @@ export function PlayerProfileHeader({ profile, stats }: PlayerProfileHeaderProps
         profile={profile}
         onUpdate={() => window.location.reload()}
       />
-      <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-2xl p-8 shadow-2xl">
+      <div className="bg-white border border-wefit-primary/40 rounded-2xl p-8 shadow-lg">
         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
           {/* Avatar */}
           <div className="relative">
@@ -72,11 +72,11 @@ export function PlayerProfileHeader({ profile, stats }: PlayerProfileHeaderProps
           <div className="flex-1">
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
                   {profile.display_name}
                 </h1>
 
-                <div className="flex flex-wrap items-center gap-4 text-gray-400 text-sm mb-4">
+                <div className="flex flex-wrap items-center gap-4 text-wefit-grey text-sm mb-4">
                   {profile.location && (
                     <div className="flex items-center gap-1">
                       <MapPin className="w-4 h-4" />
@@ -90,14 +90,14 @@ export function PlayerProfileHeader({ profile, stats }: PlayerProfileHeaderProps
                 </div>
 
                 {profile.bio && (
-                  <p className="text-gray-300 max-w-2xl mb-4">{profile.bio}</p>
+                  <p className="text-gray-700 max-w-2xl mb-4">{profile.bio}</p>
                 )}
               </div>
 
               {isOwnProfile && (
                 <button
                   onClick={() => setShowEditModal(true)}
-                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                  className="px-4 py-2 border border-wefit-primary text-wefit-primary hover:bg-wefit-primary/10 rounded-lg transition-colors flex items-center gap-2"
                 >
                   <Edit className="w-4 h-4" />
                   Edit Profile
@@ -107,23 +107,23 @@ export function PlayerProfileHeader({ profile, stats }: PlayerProfileHeaderProps
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-              <div className="bg-gray-800/50 rounded-lg p-4">
-                <div className="text-gray-400 text-sm mb-1">Rating</div>
-                <div className="text-2xl font-bold text-yellow-500">{profile.skill_rating}</div>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="text-wefit-grey text-sm mb-1">Rating</div>
+                <div className="text-2xl font-bold text-wefit-gold">{profile.skill_rating}</div>
               </div>
 
-              <div className="bg-gray-800/50 rounded-lg p-4">
-                <div className="text-gray-400 text-sm mb-1">Matches</div>
-                <div className="text-2xl font-bold text-white">{stats?.matches_played || 0}</div>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="text-wefit-grey text-sm mb-1">Matches</div>
+                <div className="text-2xl font-bold text-gray-900">{stats?.matches_played || 0}</div>
               </div>
 
-              <div className="bg-gray-800/50 rounded-lg p-4">
-                <div className="text-gray-400 text-sm mb-1">Win Rate</div>
-                <div className="text-2xl font-bold text-green-500">{winRate}%</div>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="text-wefit-grey text-sm mb-1">Win Rate</div>
+                <div className="text-2xl font-bold text-wefit-success">{winRate}%</div>
               </div>
 
-              <div className="bg-gray-800/50 rounded-lg p-4">
-                <div className="text-gray-400 text-sm mb-1">Streak</div>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="text-wefit-grey text-sm mb-1">Streak</div>
                 <div className="text-2xl font-bold text-orange-500 flex items-center gap-1">
                   {stats?.current_win_streak && stats.current_win_streak > 0 ? (
                     <>🔥 {stats.current_win_streak}</>

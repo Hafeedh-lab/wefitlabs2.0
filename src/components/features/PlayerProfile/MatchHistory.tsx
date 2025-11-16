@@ -63,10 +63,10 @@ export function MatchHistory({ playerId }: MatchHistoryProps) {
 
   if (loading) {
     return (
-      <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-8">
+      <div className="bg-white border border-gray-200 rounded-xl p-8">
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-gray-800 rounded-lg" />
+            <div key={i} className="h-20 bg-gray-100 rounded-lg" />
           ))}
         </div>
       </div>
@@ -75,19 +75,19 @@ export function MatchHistory({ playerId }: MatchHistoryProps) {
 
   if (matches.length === 0) {
     return (
-      <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-8 text-center">
-        <Trophy className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-400 mb-2">No Matches Yet</h3>
+      <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
+        <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold text-wefit-grey mb-2">No Matches Yet</h3>
         <p className="text-gray-500">Match history will appear here after playing</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
+    <div className="bg-white border border-gray-200 rounded-xl p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-white">Match History</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Match History</h2>
 
         {/* Filter */}
         <div className="flex gap-2">
@@ -97,8 +97,8 @@ export function MatchHistory({ playerId }: MatchHistoryProps) {
               onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 filter === f
-                  ? 'bg-yellow-500 text-black'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  ? 'bg-wefit-primary text-white'
+                  : 'bg-gray-100 text-wefit-grey hover:bg-gray-200'
               }`}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -143,10 +143,10 @@ export function MatchHistory({ playerId }: MatchHistoryProps) {
                   </div>
 
                   <div>
-                    <div className="text-2xl font-bold text-white mb-1">
+                    <div className="text-2xl font-bold text-gray-900 mb-1">
                       {match.player_score} - {match.opponent_score}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <div className="flex items-center gap-2 text-sm text-wefit-grey">
                       {match.event && (
                         <>
                           <Calendar className="w-4 h-4" />
@@ -159,10 +159,10 @@ export function MatchHistory({ playerId }: MatchHistoryProps) {
 
                 {/* Right: Teams */}
                 <div className="text-right">
-                  <div className="text-sm text-gray-400 mb-1">vs</div>
+                  <div className="text-sm text-wefit-grey mb-1">vs</div>
                   <div className="flex items-center gap-2 justify-end">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    <span className="text-white">
+                    <Users className="w-4 h-4 text-wefit-grey" />
+                    <span className="text-gray-900">
                       {opponents.map((p: any) => p.display_name).join(' & ')}
                     </span>
                   </div>
